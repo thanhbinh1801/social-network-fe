@@ -1,74 +1,73 @@
-# React + TypeScript + Vite
+# Social Network Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend cho dự án mạng xã hội, được xây dựng bằng **React**, **TypeScript** và **Vite**. Dự án sử dụng **Tailwind CSS** cho styling và **Shadcn UI** cho các component.
 
-Currently, two official plugins are available:
+## 🚀 Hướng dẫn chạy dự án
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Điều kiện tiên quyết
+- Node.js (phiên bản 18 trở lên)
+- npm hoặc pnpm
 
-## React Compiler
+### Các bước cài đặt
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Cài đặt dependencies:**
+   ```bash
+   npm install
+   # hoặc
+   pnpm install
+   ```
 
-## Expanding the ESLint configuration
+2. **Chạy dự án ở chế độ phát triển:**
+   ```bash
+   npm run dev
+   # hoặc
+   pnpm dev
+   ```
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+3. **Truy cập ứng dụng:**
+   Mở trình duyệt và truy cập: [http://localhost:5173](http://localhost:5173)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🏗️ Cấu trúc thư mục (Feature-Based Architecture)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Dự án được tổ chức theo kiến trúc **Feature-Based**, giúp dễ dàng mở rộng và quản lý code theo từng tính năng cụ thể.
+
+```text
+src/
+├── app/              # Cấu hình chính của ứng dụng (Router, Layout tổng)
+├── assets/           # Hình ảnh, font, và các tài nguyên tĩnh
+├── components/       # Các UI Component dùng chung (Button, Input,...)
+│   └── ui/           # Các component từ Shadcn UI
+├── features/         # Nơi chứa các tính năng chính của dự án
+│   ├── auth/         # Tính năng đăng nhập, đăng ký
+│   ├── post/         # Tính năng bài viết
+│   ├── chat/         # Tính năng nhắn tin
+│   ├── notification/ # Tính năng thông báo
+│   ├── user/         # Tính năng trang cá nhân, thông tin người dùng
+│   └── ...           # Các tính năng khác (follow, comment, reaction,...)
+├── hooks/            # Các Custom Hooks dùng chung cho toàn dự án
+├── lib/              # Cấu hình cho các thư viện bên thứ 3 (utils, axios,...)
+├── services/         # Các service kết nối API, Socket
+├── types/            # Định nghĩa các TypeScript Interface/Type dùng chung
+└── utils/            # Các hàm tiện ích (format date, validation,...)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Chi tiết bên trong mỗi Feature
+Mỗi folder trong `src/features` sẽ bao gồm:
+- `components/`: Các component chỉ dùng riêng cho feature đó.
+- `hooks/`: Các custom hooks phục vụ logic của feature.
+- `services/`: Các hàm gọi API liên quan.
+- `types/`: Kiểu dữ liệu riêng cho tính năng.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-# social-network-fe
+## 🛠️ Công nghệ sử dụng
+
+- **Framework:** [React 19](https://react.dev/)
+- **Build Tool:** [Vite](https://vitejs.dev/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components:** [Shadcn UI](https://ui.shadcn.com/)
+- **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) (nếu có)
+- **Networking:** [Axios](https://axios-http.com/), [Socket.io Client](https://socket.io/docs/v4/client-api/)
