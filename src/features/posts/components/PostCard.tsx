@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { MoreHorizontal, Trash2, MessageCircle, Lock, Users } from "lucide-react";
+import { MoreHorizontal, Trash2, MessageCircle, Lock, Users, Bookmark, Send } from "lucide-react";
 import type { PostObject } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -55,119 +54,178 @@ export default function PostCard({ post, onDelete, onReactionUpdate }: PostCardP
         ) : null;
 
     return (
-        <article className="px-4 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors">
-            <div className="flex gap-3">
-                {/* Avatar */}
-                <Link to={`/profile/${post.author.id}`} className="flex-shrink-0">
-                    <Avatar className="w-10 h-10">
-                        <AvatarImage src={resolveMedia(post.author.avatar ?? "")} />
-                        <AvatarFallback className="bg-gray-200 text-gray-600 text-sm font-semibold">
-                            {post.author.username[0].toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                </Link>
-
-                <div className="flex-1 min-w-0">
-                    {/* Header */}
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <Link
-                                to={`/profile/${post.author.id}`}
-                                className="font-semibold text-[15px] hover:underline truncate"
+        <article
+            className="rounded-md mb-6"
+            style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #dbdbdb",
+            }}
+        >
+            {/* ── Post Header ── */}
+            <div className="flex items-center justify-between px-3 py-3">
+                <div className="flex items-center gap-3">
+                    <Link to={`/profile/${post.author.id}`} className="flex-shrink-0">
+                        <Avatar className="w-8 h-8">
+                            <AvatarImage src={resolveMedia(post.author.avatar ?? "")} />
+                            <AvatarFallback
+                                className="text-xs font-semibold"
+                                style={{ backgroundColor: "#efefef", color: "#262626" }}
                             >
-                                {post.author.username}
-                            </Link>
+                                {post.author.username[0].toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                    </Link>
+                    <div className="flex flex-col leading-none">
+                        <Link
+                            to={`/profile/${post.author.id}`}
+                            className="font-semibold text-[14px] hover:opacity-70 transition-opacity"
+                            style={{ color: "#262626" }}
+                        >
+                            {post.author.username}
+                        </Link>
+                        <div className="flex items-center gap-1 mt-0.5">
                             {visibilityIcon && (
-                                <Badge variant="secondary" className="text-[10px] gap-1 px-1.5 py-0">
-                                    {visibilityIcon}
-                                    {post.visibility}
-                                </Badge>
+                                <span style={{ color: "#8e8e8e" }}>{visibilityIcon}</span>
                             )}
-                            <span className="text-gray-500 text-sm flex-shrink-0">
+                            <span className="text-[11px]" style={{ color: "#8e8e8e" }}>
                                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                             </span>
                         </div>
-
-                        {isOwner && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger className="text-gray-400 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleDelete} className="text-red-500 gap-2">
-                                        <Trash2 className="w-4 h-4" /> Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
                     </div>
+                </div>
 
-                    {/* Body */}
-                    {post.body && (
-                        <p className="mt-1 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                            {post.body}
-                        </p>
-                    )}
-
-                    {/* Media */}
-                    {post.media.length > 0 && (
-                        <div className="mt-3 rounded-xl overflow-hidden grid gap-1">
-                            {post.media.map((m) =>
-                                m.media_type === "image" ? (
-                                    <img
-                                        key={m.id}
-                                        src={resolveMedia(m.file)}
-                                        alt="Post media"
-                                        className="w-full rounded-xl object-cover max-h-96"
-                                    />
-                                ) : (
-                                    <video
-                                        key={m.id}
-                                        src={resolveMedia(m.file)}
-                                        controls
-                                        className="w-full rounded-xl"
-                                    />
-                                )
-                            )}
-                        </div>
-                    )}
-
-                    {/* Hashtags */}
-                    {post.hashtags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                            {post.hashtags.map((h) => (
-                                <span key={h.id} className="text-blue-500 text-sm hover:underline cursor-pointer">
-                                    #{h.name}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Action row */}
-                    <div className="mt-3 flex items-center gap-6">
-                        <ReactionButton
-                            postId={post.id}
-                            reactionsCount={reactionsCount}
-                            initialReaction={post.user_reaction}
-                            onReactionChange={handleReactionChange}
-                        />
-                        <button
-                            onClick={() => setShowComments((v) => !v)}
-                            className="flex items-center gap-1.5 text-gray-500 hover:text-blue-500 transition-colors text-sm"
+                {isOwner && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            className="p-1 rounded-full transition-opacity hover:opacity-60"
+                            style={{ color: "#262626" }}
                         >
-                            <MessageCircle className="w-4 h-4" />
-                            <span>{post.comments_count}</span>
-                        </button>
-                    </div>
+                            <MoreHorizontal className="w-5 h-5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={handleDelete} className="gap-2" style={{ color: "#ed4956" }}>
+                                <Trash2 className="w-4 h-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
 
-                    {/* Comments */}
-                    {showComments && (
-                        <div className="mt-3">
-                            <CommentSection postId={post.id} />
-                        </div>
+            {/* ── Media ── */}
+            {post.media.length > 0 && (
+                <div className="w-full" style={{ borderTop: "1px solid #efefef", borderBottom: "1px solid #efefef" }}>
+                    {post.media.map((m) =>
+                        m.media_type === "image" ? (
+                            <img
+                                key={m.id}
+                                src={resolveMedia(m.file)}
+                                alt="Post media"
+                                className="w-full block"
+                                style={{ maxHeight: "600px", objectFit: "cover" }}
+                            />
+                        ) : (
+                            <video
+                                key={m.id}
+                                src={resolveMedia(m.file)}
+                                controls
+                                className="w-full block"
+                            />
+                        )
                     )}
                 </div>
+            )}
+
+            {/* ── Action row ── */}
+            <div className="px-3 pt-3 pb-2">
+                <div className="flex items-center gap-3 mb-2">
+                    {/* Like (Heart) */}
+                    <ReactionButton
+                        postId={post.id}
+                        reactionsCount={reactionsCount}
+                        initialReaction={post.user_reaction}
+                        onReactionChange={handleReactionChange}
+                    />
+                    {/* Comment */}
+                    <button
+                        onClick={() => setShowComments((v) => !v)}
+                        className="flex items-center gap-1.5 transition-opacity hover:opacity-60"
+                        style={{ color: "#262626" }}
+                        title="Comment"
+                    >
+                        <MessageCircle className="w-6 h-6" />
+                    </button>
+                    {/* Share (decorative) */}
+                    <button
+                        className="flex items-center transition-opacity hover:opacity-60"
+                        style={{ color: "#262626" }}
+                        title="Share"
+                    >
+                        <Send className="w-6 h-6" />
+                    </button>
+                    {/* Bookmark (decorative, pushed right) */}
+                    <button
+                        className="flex items-center transition-opacity hover:opacity-60 ml-auto"
+                        style={{ color: "#262626" }}
+                        title="Save"
+                    >
+                        <Bookmark className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Like count */}
+                {reactionsCount > 0 && (
+                    <p className="text-[14px] font-semibold mb-1" style={{ color: "#262626" }}>
+                        {reactionsCount.toLocaleString()} {reactionsCount === 1 ? "like" : "likes"}
+                    </p>
+                )}
+
+                {/* Caption */}
+                {(post.body || post.hashtags.length > 0) && (
+                    <p className="text-[14px] leading-relaxed mb-1">
+                        <Link
+                            to={`/profile/${post.author.id}`}
+                            className="font-semibold mr-1 hover:opacity-70 transition-opacity"
+                            style={{ color: "#262626" }}
+                        >
+                            {post.author.username}
+                        </Link>
+                        <span style={{ color: "#262626" }}>{post.body}</span>
+                        {post.hashtags.length > 0 && (
+                            <>
+                                {" "}
+                                {post.hashtags.map((h) => (
+                                    <span key={h.id} className="cursor-pointer hover:opacity-70" style={{ color: "#00376b" }}>
+                                        #{h.name}{" "}
+                                    </span>
+                                ))}
+                            </>
+                        )}
+                    </p>
+                )}
+
+                {/* Comment count trigger */}
+                {post.comments_count > 0 && !showComments && (
+                    <button
+                        onClick={() => setShowComments(true)}
+                        className="text-[14px] hover:opacity-60 transition-opacity block mb-1"
+                        style={{ color: "#8e8e8e" }}
+                    >
+                        View all {post.comments_count} comment{post.comments_count !== 1 ? "s" : ""}
+                    </button>
+                )}
+
+                {/* Timestamp */}
+                <p className="text-[10px] uppercase tracking-widest mt-1" style={{ color: "#8e8e8e" }}>
+                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </p>
             </div>
+
+            {/* ── Comments ── */}
+            {showComments && (
+                <div style={{ borderTop: "1px solid #efefef" }}>
+                    <CommentSection postId={post.id} />
+                </div>
+            )}
         </article>
     );
 }

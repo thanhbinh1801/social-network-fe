@@ -15,5 +15,11 @@ export const authApi = {
     refresh: (refresh: string) =>
         api.post<{ access: string }>("/auth/token/refresh/", { refresh }),
 
+    verifyEmail: (data: { email: string; code: string }) =>
+        api.post<{ detail: string }>("/auth/verify-email/", data),
+
+    resendVerification: (data: { email: string }) =>
+        api.post<{ detail: string }>("/auth/resend-verification/", data),
+
     me: () => api.get<UserPublicObject>("/users/me/"),
 };

@@ -11,7 +11,7 @@ export const profileApi = {
         }),
 
     followToggle: (id: number) =>
-        api.post<{ detail: string }>(`/users/${id}/follow/`),
+        api.post<{ detail: string }>(`/users/${id}/follow/`, {}),
 
     getFollowers: (id: number) =>
         api.get<FollowRelation[]>(`/users/${id}/followers/`),

@@ -42,7 +42,7 @@ export function useAuth() {
         try {
             await authApi.register(data);
             toast.success("Registration successful! Please verify your email.");
-            navigate("/login");
+            navigate("/verify-email", { state: { email: data.email } });
         } catch (err) {
             const error = err as AxiosError<Record<string, string[]>>;
             const field = error.response?.data;
@@ -55,10 +55,46 @@ export function useAuth() {
         }
     };
 
+    const handleVerifyEmail = async (data: { email: string; code: string }) => {
+        setLoading(true);
+        try {
+            await authApi.verifyEmail(data);
+            toast.success("Email verified successfully! You can now log in.");
+            navigate("/login");
+        } catch (err) {
+            const error = err as AxiosError<DetailResponse>;
+            const msg = error.response?.data?.detail ?? "Verification failed.";
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendVerification = async (data: { email: string }) => {
+        setLoading(true);
+        try {
+            await authApi.resendVerification(data);
+            toast.success("Verification email resent!");
+        } catch (err) {
+            const error = err as AxiosError<DetailResponse>;
+            const msg = error.response?.data?.detail ?? "Failed to resend verification.";
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleLogout = () => {
         logout();
         navigate("/login");
     };
 
-    return { loading, handleLogin, handleRegister, handleLogout };
+    return {
+        loading,
+        handleLogin,
+        handleRegister,
+        handleVerifyEmail,
+        handleResendVerification,
+        handleLogout
+    };
 }
