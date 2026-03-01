@@ -7,7 +7,7 @@ import type { ReactionType } from "@/types";
 interface Props {
     postId: number;
     reactionsCount: number;
-    initialReaction: ReactionType | null; // from server: null means not reacted
+    initialReaction: ReactionType | null;
     onReactionChange: (delta: number) => void;
 }
 
@@ -19,10 +19,10 @@ export default function ReactionButton({
     initialReaction,
     onReactionChange,
 }: Props) {
-    // Initialize from server state
     const [liked, setLiked] = useState<boolean>(initialReaction !== null);
-    const [count, setCount] = useState<number>(reactionsCount);
     const [pending, setPending] = useState(false);
+    const [animating, setAnimating] = useState(false);
+    void reactionsCount; // count is displayed by the parent PostCard
 
     const handleClick = async () => {
         if (pending) return;
@@ -31,9 +31,14 @@ export default function ReactionButton({
         const wasLiked = liked;
         const delta = wasLiked ? -1 : 1;
 
+        // Trigger animation
+        if (!wasLiked) {
+            setAnimating(true);
+            setTimeout(() => setAnimating(false), 300);
+        }
+
         // Optimistic update
         setLiked(!wasLiked);
-        setCount((c) => c + delta);
         onReactionChange(delta);
 
         try {
@@ -41,7 +46,6 @@ export default function ReactionButton({
         } catch {
             // Rollback
             setLiked(wasLiked);
-            setCount((c) => c - delta);
             onReactionChange(-delta);
         } finally {
             setPending(false);
@@ -53,12 +57,23 @@ export default function ReactionButton({
             onClick={handleClick}
             disabled={pending}
             className={cn(
-                "flex items-center gap-1.5 text-sm transition-colors select-none",
-                liked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+                "flex items-center transition-all select-none",
+                pending && "opacity-50 cursor-not-allowed"
             )}
+            title={liked ? "Unlike" : "Like"}
         >
-            <Heart className={cn("w-4 h-4 transition-transform", liked && "fill-current scale-110")} />
-            <span>{count}</span>
+            <Heart
+                className={cn(
+                    "w-6 h-6 transition-all duration-200",
+                    liked ? "fill-current scale-110" : "hover:opacity-60",
+                    animating && "scale-125"
+                )}
+                style={{
+                    color: liked ? "#ed4956" : "#262626",
+                    fill: liked ? "#ed4956" : "none",
+                    transition: "color 0.15s ease, fill 0.15s ease, transform 0.2s ease",
+                }}
+            />
         </button>
     );
 }

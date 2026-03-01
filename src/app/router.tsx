@@ -3,6 +3,7 @@ import { useAuthStore } from "@/store/auth.store";
 import AppLayout from "@/components/layout/AppLayout";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
+import VerifyEmailPage from "@/features/auth/pages/VerifyEmailPage";
 import FeedPage from "@/features/feed/pages/FeedPage";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import SettingsPage from "@/features/profile/pages/SettingsPage";
@@ -37,6 +38,14 @@ export default function AppRouter() {
                     element={
                         <GuestRoute>
                             <RegisterPage />
+                        </GuestRoute>
+                    }
+                />
+                <Route
+                    path="/verify-email"
+                    element={
+                        <GuestRoute>
+                            <VerifyEmailPage />
                         </GuestRoute>
                     }
                 />
