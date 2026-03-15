@@ -1,25 +1,13 @@
 import { api } from "@/lib/axios";
-import type { CommentObject, FollowRelation } from "@/types";
-
-// DRF PageNumberPagination wrapper
-interface Paginated<T> {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: T[];
-}
-
-/** Unwrap paginated or plain-array response → always returns an array */
-export function unwrapList<T>(data: T[] | Paginated<T>): T[] {
-    return Array.isArray(data) ? data : data.results;
-}
+import { unwrapList } from "@/lib/api";
+import type { CommentObject, FollowRelation, PaginatedResponse } from "@/types";
 
 export const engagementApi = {
     react: (postId: number, type: string) =>
         api.post<{ detail: string }>(`/posts/${postId}/react/`, { type }),
 
     getComments: async (postId: number): Promise<CommentObject[]> => {
-        const res = await api.get<CommentObject[] | Paginated<CommentObject>>(
+        const res = await api.get<CommentObject[] | PaginatedResponse<CommentObject>>(
             `/posts/${postId}/comments/`
         );
         return unwrapList(res.data);
@@ -27,18 +15,36 @@ export const engagementApi = {
 
     createComment: (postId: number, body: string) =>
         api.post<CommentObject>(`/posts/${postId}/comments/`, { body }),
+
+    getReplies: async (commentId: number): Promise<CommentObject[]> => {
+        const res = await api.get<CommentObject[] | PaginatedResponse<CommentObject>>(
+            `/comments/${commentId}/replies/`
+        );
+        return unwrapList(res.data);
+    },
+
+    createReply: (commentId: number, body: string) =>
+        api.post<CommentObject>(`/comments/${commentId}/replies/`, { body }),
+
+    updateComment: (commentId: number, body: string) =>
+        api.patch<CommentObject>(`/comments/${commentId}/`, { body }),
+
+    deleteComment: (commentId: number) => api.delete(`/comments/${commentId}/`),
+
+    sharePost: (postId: number, quote?: string) =>
+        api.post(`/posts/${postId}/share/`, quote ? { quote } : {}),
 };
 
 export const followApi = {
     getFollowers: async (userId: number): Promise<FollowRelation[]> => {
-        const res = await api.get<FollowRelation[] | Paginated<FollowRelation>>(
+        const res = await api.get<FollowRelation[] | PaginatedResponse<FollowRelation>>(
             `/users/${userId}/followers/`
         );
         return unwrapList(res.data);
     },
 
     getFollowing: async (userId: number): Promise<FollowRelation[]> => {
-        const res = await api.get<FollowRelation[] | Paginated<FollowRelation>>(
+        const res = await api.get<FollowRelation[] | PaginatedResponse<FollowRelation>>(
             `/users/${userId}/following/`
         );
         return unwrapList(res.data);

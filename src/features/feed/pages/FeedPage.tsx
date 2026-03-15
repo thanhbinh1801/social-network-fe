@@ -1,101 +1,109 @@
-import { useEffect, useRef } from "react";
-import { useFeed } from "@/features/feed/hooks/useFeed";
-import PostCard from "@/features/posts/components/PostCard";
-import CreatePostBox from "@/features/posts/components/CreatePostBox";
+import { useEffect, useRef, useState } from "react";
+import { Flame, Newspaper } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useFeed } from "@/features/feed/hooks/useFeed";
+import CreatePostBox from "@/features/posts/components/CreatePostBox";
+import PostCard from "@/features/posts/components/PostCard";
 
 function PostSkeleton() {
     return (
-        <div
-            className="rounded-md mb-6"
-            style={{ backgroundColor: "#ffffff", border: "1px solid #dbdbdb" }}
-        >
-            {/* Header */}
-            <div className="flex items-center gap-3 px-3 py-3">
-                <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: "#efefef" }} />
-                <div className="space-y-1">
-                    <Skeleton className="h-3 w-24" style={{ backgroundColor: "#efefef" }} />
-                    <Skeleton className="h-3 w-16" style={{ backgroundColor: "#efefef" }} />
+        <Card className="mb-4 overflow-hidden border-border/70">
+            <CardContent className="space-y-3 p-4">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-20" />
+                    </div>
                 </div>
-            </div>
-            {/* Image */}
-            <Skeleton className="w-full h-60" style={{ borderRadius: 0, backgroundColor: "#efefef" }} />
-            {/* Actions */}
-            <div className="px-3 pt-3 pb-4 space-y-2">
-                <Skeleton className="h-3 w-32" style={{ backgroundColor: "#efefef" }} />
-                <Skeleton className="h-3 w-full" style={{ backgroundColor: "#efefef" }} />
-                <Skeleton className="h-3 w-3/4" style={{ backgroundColor: "#efefef" }} />
-            </div>
-        </div>
+                <Skeleton className="h-40 w-full rounded-xl" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+        </Card>
     );
 }
 
 export default function FeedPage() {
-    const { posts, loading, hasMore, loadMore, prependPost, removePost, updatePost } = useFeed();
+    const [tab, setTab] = useState<"personalized" | "trending">("personalized");
+    const personalizedFeed = useFeed("personalized");
+    const trendingFeed = useFeed("trending");
+    const currentFeed = tab === "trending" ? trendingFeed : personalizedFeed;
     const sentinelRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!sentinelRef.current) return;
+
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loading) {
-                    loadMore();
+                if (entries[0].isIntersecting && currentFeed.hasMore && !currentFeed.loading) {
+                    currentFeed.loadMore();
                 }
             },
             { threshold: 0.1 }
         );
+
         observer.observe(sentinelRef.current);
         return () => observer.disconnect();
-    }, [hasMore, loading, loadMore]);
+    }, [currentFeed]);
 
     return (
-        <div className="max-w-[470px] mx-auto py-6 pb-20 md:pb-6 px-0">
-            {/* Create post */}
-            <CreatePostBox onPostCreated={prependPost} />
+        <div className="mx-auto w-full max-w-3xl px-4 py-6">
+            <div className="mb-5 flex flex-col gap-4">
+                <CreatePostBox onPostCreated={personalizedFeed.prependPost} />
 
-            {/* Feed */}
-            {posts.length === 0 && !loading ? (
-                <div
-                    className="rounded-md py-16 text-center"
-                    style={{ border: "1px solid #dbdbdb", backgroundColor: "#ffffff" }}
+                <Tabs
+                    value={tab}
+                    onValueChange={(value) => setTab(value as "personalized" | "trending")}
+                    className="w-full"
                 >
-                    <p className="font-semibold text-[16px]" style={{ color: "#262626" }}>
-                        Nothing here yet
-                    </p>
-                    <p className="text-sm mt-1" style={{ color: "#8e8e8e" }}>
-                        Create your first post to get started.
-                    </p>
-                </div>
+                    <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-secondary/80">
+                        <TabsTrigger value="personalized" className="gap-2 rounded-xl">
+                            <Newspaper className="h-4 w-4" />
+                            Following feed
+                        </TabsTrigger>
+                        <TabsTrigger value="trending" className="gap-2 rounded-xl">
+                            <Flame className="h-4 w-4" />
+                            Trending
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            </div>
+
+            {currentFeed.posts.length === 0 && !currentFeed.loading ? (
+                <Card className="border-dashed">
+                    <CardContent className="py-12 text-center">
+                        <p className="text-base font-semibold">
+                            {tab === "trending" ? "No trending posts yet" : "Nothing here yet"}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            {tab === "trending"
+                                ? "Once posts pick up reactions and comments, they will show here."
+                                : "Create your first post or follow more people to personalize the feed."}
+                        </p>
+                    </CardContent>
+                </Card>
             ) : (
-                <>
-                    {posts.map((post) => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            onDelete={removePost}
-                            onUpdate={updatePost}
-                        />
-                    ))}
-                </>
+                currentFeed.posts.map((post) => (
+                    <PostCard
+                        key={post.id}
+                        post={post}
+                        onDelete={currentFeed.removePost}
+                        onUpdate={currentFeed.updatePost}
+                    />
+                ))
             )}
 
-            {/* Loading skeletons */}
-            {loading && (
+            {currentFeed.loading && (
                 <>
-                    <PostSkeleton />
                     <PostSkeleton />
                     <PostSkeleton />
                 </>
             )}
 
-            {/* Infinite scroll sentinel */}
             <div ref={sentinelRef} className="h-4" />
-
-            {!hasMore && posts.length > 0 && (
-                <p className="text-center py-8 text-sm" style={{ color: "#8e8e8e" }}>
-                    You're all caught up! ✓
-                </p>
-            )}
         </div>
     );
 }

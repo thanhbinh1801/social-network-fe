@@ -1,244 +1,292 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Shield, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/auth.store";
-import { profileApi } from "@/features/profile/api/profile.api";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-
-import { resolveMedia as ra } from "@/lib/config";
+import { profileApi } from "@/features/profile/api/profile.api";
+import { resolveMedia } from "@/lib/config";
+import { useAuthStore } from "@/store/auth.store";
+import type { PrivacySettings } from "@/types";
 
 export default function SettingsPage() {
-    const { user, setUser } = useAuthStore();
     const navigate = useNavigate();
-    const [loadingUser, setLoadingUser] = useState(false);
+    const { user, setUser } = useAuthStore();
     const [form, setForm] = useState({
         username: "",
         bio: "",
         website: "",
         location: "",
     });
+    const [privacy, setPrivacy] = useState<PrivacySettings>({
+        privacy_posts: "public",
+        privacy_messages: "everyone",
+    });
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [coverFile, setCoverFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [savingPrivacy, setSavingPrivacy] = useState(false);
 
-    // If user is not in the store yet (background /me failed), fetch it now
     useEffect(() => {
-        if (user) {
-            setForm({
-                username: user.username,
-                bio: user.bio,
-                website: user.website,
-                location: user.location,
-            });
-        } else {
-            setLoadingUser(true);
-            profileApi
-                .getUser("me")
-                .then(({ data }) => {
-                    setUser(data);
-                    setForm({
-                        username: data.username,
-                        bio: data.bio,
-                        website: data.website,
-                        location: data.location,
-                    });
-                })
-                .catch(() => toast.error("Could not load profile. Please re-login."))
-                .finally(() => setLoadingUser(false));
-        }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+        Promise.all([profileApi.getMe(), profileApi.getPrivacy()])
+            .then(([userRes, privacyRes]) => {
+                setUser(userRes.data);
+                setForm({
+                    username: userRes.data.username,
+                    bio: userRes.data.bio,
+                    website: userRes.data.website,
+                    location: userRes.data.location,
+                });
+                setPrivacy(privacyRes.data);
+            })
+            .catch(() => toast.error("Could not load settings."))
+            .finally(() => setLoading(false));
+    }, []);
 
-    const onChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+    };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleProfileSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setSavingProfile(true);
 
-        // Re-fetch user id if still null
-        let uid = user?.id;
-        if (!uid) {
-            toast.error("User not loaded. Please wait or refresh.");
-            return;
-        }
-
-        setLoading(true);
         try {
-            const fd = new FormData();
-            fd.append("username", form.username);
-            fd.append("bio", form.bio);
-            fd.append("website", form.website);
-            fd.append("location", form.location);
-            if (avatarFile) fd.append("avatar", avatarFile);
-            if (coverFile) fd.append("cover", coverFile);
+            const formData = new FormData();
+            formData.append("username", form.username);
+            formData.append("bio", form.bio);
+            formData.append("website", form.website);
+            formData.append("location", form.location);
+            if (avatarFile) formData.append("avatar", avatarFile);
+            if (coverFile) formData.append("cover", coverFile);
 
-            const { data } = await profileApi.updateUser(uid, fd);
+            const { data } = await profileApi.updateMe(formData);
             setUser(data);
             setAvatarFile(null);
             setCoverFile(null);
-            toast.success("Profile updated!");
-            navigate(`/profile/${uid}`);
+            toast.success("Profile updated.");
+            navigate(`/profile/${data.id}`);
         } catch {
             toast.error("Failed to update profile.");
         } finally {
-            setLoading(false);
+            setSavingProfile(false);
         }
     };
 
-    if (loadingUser) {
+    const handlePrivacySubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setSavingPrivacy(true);
+
+        try {
+            const { data } = await profileApi.updatePrivacy(privacy);
+            setPrivacy(data);
+            toast.success("Privacy settings updated.");
+        } catch {
+            toast.error("Failed to update privacy.");
+        } finally {
+            setSavingPrivacy(false);
+        }
+    };
+
+    const avatarPreview = avatarFile
+        ? URL.createObjectURL(avatarFile)
+        : resolveMedia(user?.avatar);
+    const coverPreview = coverFile ? URL.createObjectURL(coverFile) : resolveMedia(user?.cover);
+
+    if (loading) {
         return (
-            <div className="px-4 py-6 space-y-4">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-4 w-64" />
+            <div className="mx-auto max-w-4xl px-4 py-8">
+                <Card>
+                    <CardContent className="py-10 text-sm text-muted-foreground">
+                        Loading settings...
+                    </CardContent>
+                </Card>
             </div>
         );
     }
 
-    // Avatar preview: prefer newly chosen file, then server URL with cache-bust
-    const avatarPreview = avatarFile
-        ? URL.createObjectURL(avatarFile)
-        : user?.avatar
-            ? `${ra(user.avatar)}?t=${user.username}` // bust browser cache with a stable key
-            : "";
-
-    const coverPreview = coverFile
-        ? URL.createObjectURL(coverFile)
-        : user?.cover
-            ? `${ra(user.cover)}?t=${user.username}`
-            : "";
-
     return (
-        <div className="pb-20 md:pb-0">
-            <div className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b border-gray-200 px-4 py-3">
-                <h1 className="text-xl font-bold">Settings</h1>
-            </div>
+        <div className="mx-auto grid max-w-5xl gap-6 px-4 py-6 lg:grid-cols-[1.5fr_1fr]">
+            <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <UserRound className="h-5 w-5 text-primary" />
+                        Profile settings
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleProfileSubmit} className="space-y-5">
+                        <div className="space-y-3">
+                            <div className="h-36 overflow-hidden rounded-2xl border bg-secondary/30">
+                                {coverPreview ? (
+                                    <img
+                                        src={coverPreview}
+                                        alt="Cover preview"
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : null}
+                            </div>
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                                <Avatar className="h-20 w-20 border">
+                                    <AvatarImage src={avatarPreview} />
+                                    <AvatarFallback>{user?.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-wrap gap-3">
+                                    <label className="inline-flex cursor-pointer items-center rounded-md border px-4 py-2 text-sm font-medium">
+                                        Change avatar
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(event) =>
+                                                setAvatarFile(event.target.files?.[0] ?? null)
+                                            }
+                                        />
+                                    </label>
+                                    <label className="inline-flex cursor-pointer items-center rounded-md border px-4 py-2 text-sm font-medium">
+                                        Change cover
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(event) =>
+                                                setCoverFile(event.target.files?.[0] ?? null)
+                                            }
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
 
-            <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6 max-w-lg">
-                {/* Avatar */}
-                <div className="flex items-center gap-4">
-                    <Avatar className="w-16 h-16 border border-gray-200">
-                        <AvatarImage src={avatarPreview} />
-                        <AvatarFallback className="text-lg bg-gray-100">
-                            {user?.username?.[0]?.toUpperCase() ?? "?"}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <Label
-                            htmlFor="avatar-upload"
-                            className="cursor-pointer text-sm text-blue-500 hover:underline font-medium"
-                        >
-                            {avatarFile ? `Selected: ${avatarFile.name}` : "Change avatar"}
-                        </Label>
-                        <input
-                            id="avatar-upload"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) =>
-                                e.target.files?.[0] && setAvatarFile(e.target.files[0])
-                            }
-                        />
-                        {avatarFile && (
-                            <p className="text-xs text-gray-400 mt-0.5">
-                                Click save to apply
-                            </p>
-                        )}
-                    </div>
-                </div>
+                        <div className="grid gap-5">
+                            <Field label="Username">
+                                <Input
+                                    name="username"
+                                    value={form.username}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </Field>
+                            <Field label="Bio">
+                                <Textarea
+                                    name="bio"
+                                    value={form.bio}
+                                    onChange={handleChange}
+                                    rows={4}
+                                    placeholder="Write a short introduction..."
+                                />
+                            </Field>
+                            <Field label="Website">
+                                <Input
+                                    name="website"
+                                    type="url"
+                                    value={form.website}
+                                    onChange={handleChange}
+                                    placeholder="https://example.com"
+                                />
+                            </Field>
+                            <Field label="Location">
+                                <Input
+                                    name="location"
+                                    value={form.location}
+                                    onChange={handleChange}
+                                    placeholder="City, Country"
+                                />
+                            </Field>
+                        </div>
 
-                {/* Cover */}
-                <div>
-                    <Label>Cover photo</Label>
-                    <div className="mt-1 h-28 bg-gray-100 rounded-xl overflow-hidden relative">
-                        {coverPreview && (
-                            <img
-                                src={coverPreview}
-                                alt="Cover"
-                                className="w-full h-full object-cover"
-                            />
-                        )}
-                        <label
-                            htmlFor="cover-upload"
-                            className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/25 text-white text-sm font-medium hover:bg-black/35 transition"
-                        >
-                            {coverFile ? coverFile.name : "Change cover"}
-                            <input
-                                id="cover-upload"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) =>
-                                    e.target.files?.[0] && setCoverFile(e.target.files[0])
+                        <Button type="submit" disabled={savingProfile}>
+                            {savingProfile ? "Saving..." : "Save profile"}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-primary" />
+                        Privacy
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handlePrivacySubmit} className="space-y-5">
+                        <Field label="Who can see your posts">
+                            <Select
+                                value={privacy.privacy_posts}
+                                onValueChange={(value) =>
+                                    setPrivacy((prev) => ({
+                                        ...prev,
+                                        privacy_posts: value as PrivacySettings["privacy_posts"],
+                                    }))
                                 }
-                            />
-                        </label>
-                    </div>
-                </div>
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="public">Public</SelectItem>
+                                    <SelectItem value="friends">Friends</SelectItem>
+                                    <SelectItem value="private">Private</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
 
-                {/* Username */}
-                <div className="space-y-1.5">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                        id="username"
-                        name="username"
-                        value={form.username}
-                        onChange={onChange}
-                        required
-                    />
-                </div>
+                        <Field label="Who can message you">
+                            <Select
+                                value={privacy.privacy_messages}
+                                onValueChange={(value) =>
+                                    setPrivacy((prev) => ({
+                                        ...prev,
+                                        privacy_messages:
+                                            value as PrivacySettings["privacy_messages"],
+                                    }))
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="everyone">Everyone</SelectItem>
+                                    <SelectItem value="following">Following only</SelectItem>
+                                    <SelectItem value="no_one">No one</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
 
-                {/* Bio */}
-                <div className="space-y-1.5">
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                        id="bio"
-                        name="bio"
-                        value={form.bio}
-                        onChange={onChange}
-                        rows={3}
-                        maxLength={160}
-                        placeholder="Tell the world about yourself…"
-                    />
-                    <p className="text-xs text-gray-400 text-right">
-                        {form.bio.length}/160
-                    </p>
-                </div>
+                        <Button type="submit" variant="secondary" disabled={savingPrivacy}>
+                            {savingPrivacy ? "Saving..." : "Save privacy"}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
 
-                {/* Website */}
-                <div className="space-y-1.5">
-                    <Label htmlFor="website">Website</Label>
-                    <Input
-                        id="website"
-                        name="website"
-                        type="url"
-                        placeholder="https://"
-                        value={form.website}
-                        onChange={onChange}
-                    />
-                </div>
-
-                {/* Location */}
-                <div className="space-y-1.5">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                        id="location"
-                        name="location"
-                        placeholder="City, Country"
-                        value={form.location}
-                        onChange={onChange}
-                    />
-                </div>
-
-                <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? "Saving…" : "Save changes"}
-                </Button>
-            </form>
+function Field({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="space-y-2">
+            <Label>{label}</Label>
+            {children}
         </div>
     );
 }

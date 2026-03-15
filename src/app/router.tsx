@@ -1,21 +1,24 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "@/store/auth.store";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import VerifyEmailPage from "@/features/auth/pages/VerifyEmailPage";
 import FeedPage from "@/features/feed/pages/FeedPage";
+import NotificationsPage from "@/features/notifications/pages/NotificationsPage";
+import SavedPostsPage from "@/features/posts/pages/SavedPostsPage";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import SettingsPage from "@/features/profile/pages/SettingsPage";
+import DiscoverPage from "@/features/search/pages/DiscoverPage";
+import { useAuthStore } from "@/store/auth.store";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     if (!isAuthenticated) return <Navigate to="/login" replace />;
     return <>{children}</>;
 }
 
 function GuestRoute({ children }: { children: React.ReactNode }) {
-    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     if (isAuthenticated) return <Navigate to="/" replace />;
     return <>{children}</>;
 }
@@ -24,7 +27,6 @@ export default function AppRouter() {
     return (
         <BrowserRouter>
             <Routes>
-                {/* Guest-only routes */}
                 <Route
                     path="/login"
                     element={
@@ -50,7 +52,6 @@ export default function AppRouter() {
                     }
                 />
 
-                {/* Protected routes */}
                 <Route
                     element={
                         <ProtectedRoute>
@@ -59,6 +60,9 @@ export default function AppRouter() {
                     }
                 >
                     <Route path="/" element={<FeedPage />} />
+                    <Route path="/discover" element={<DiscoverPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
+                    <Route path="/saved" element={<SavedPostsPage />} />
                     <Route path="/profile/:id" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Route>

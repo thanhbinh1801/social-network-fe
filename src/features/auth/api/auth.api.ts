@@ -12,6 +12,8 @@ export const authApi = {
     login: (data: { email: string; password: string }) =>
         api.post<TokenResponse>("/auth/login/", data),
 
+    logout: (refresh: string) => api.post<{ detail: string }>("/auth/logout/", { refresh }),
+
     refresh: (refresh: string) =>
         api.post<{ access: string }>("/auth/token/refresh/", { refresh }),
 
@@ -20,6 +22,16 @@ export const authApi = {
 
     resendVerification: (data: { email: string }) =>
         api.post<{ detail: string }>("/auth/resend-verification/", data),
+
+    forgotPassword: (data: { email: string }) =>
+        api.post<{ detail: string }>("/auth/forgot-password/", data),
+
+    resetPassword: (data: {
+        email: string;
+        code: string;
+        password: string;
+        password_confirm: string;
+    }) => api.post<{ detail: string }>("/auth/reset-password/", data),
 
     me: () => api.get<UserPublicObject>("/users/me/"),
 };

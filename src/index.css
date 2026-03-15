@@ -111,11 +111,22 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html {
+    height: 100%;
+  }
+
   * {
     @apply border-[#dbdbdb] outline-[#0095f6]/50;
   }
 
   body {
+    min-height: 100dvh;
     background-color: #fafafa;
     color: #262626;
   }

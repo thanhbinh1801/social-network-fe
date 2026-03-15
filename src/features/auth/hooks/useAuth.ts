@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authStorage } from "@/lib/auth";
 import { toast } from "sonner";
 import { authApi } from "@/features/auth/api/auth.api";
 import { useAuthStore } from "@/store/auth.store";
@@ -10,19 +11,17 @@ import type { DetailResponse } from "@/types";
 export function useAuth() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const { logout } = useAuthStore(); // 'login' is no longer directly used here, but setTokens/setUser are called via getState()
+    const { logout } = useAuthStore();
 
     const handleLogin = async (email: string, password: string) => {
         setLoading(true);
         try {
             const { data } = await authApi.login({ email, password });
-            // Store tokens first, navigate immediately
             useAuthStore.getState().setTokens(data.access, data.refresh);
             navigate("/");
-            // Fetch user profile in background (non-blocking)
-            profileApi.getUser("me")
+            profileApi.getMe()
                 .then(({ data: userData }) => useAuthStore.getState().setUser(userData))
-                .catch(() => { }); // silently ignore if /me fails
+                .catch(() => { });
         } catch (err) {
             const error = err as AxiosError<DetailResponse>;
             const msg = error.response?.data?.detail ?? "Login failed.";
@@ -84,7 +83,15 @@ export function useAuth() {
         }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        const refresh = authStorage.getRefresh();
+        if (refresh) {
+            try {
+                await authApi.logout(refresh);
+            } catch {
+                // Logout locally even if server-side token revocation fails.
+            }
+        }
         logout();
         navigate("/login");
     };

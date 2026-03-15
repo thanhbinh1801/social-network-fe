@@ -13,6 +13,11 @@ export interface UserPublicObject {
     date_joined: string;
 }
 
+export interface PrivacySettings {
+    privacy_posts: "public" | "friends" | "private";
+    privacy_messages: "everyone" | "following" | "no_one";
+}
+
 export interface PostMedia {
     id: number;
     file: string;
@@ -56,6 +61,13 @@ export interface FeedResponse {
     limit: number;
 }
 
+export interface PaginatedResponse<T> {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+}
+
 export interface TokenResponse {
     access: string;
     refresh: string;
@@ -72,4 +84,21 @@ export interface FollowRelation {
     follower: UserPublicObject;
     following: UserPublicObject;
     created_at: string;
+}
+
+export interface NotificationObject {
+    id: number;
+    actor: UserPublicObject | null;
+    verb: string;
+    message?: string;
+    target_type?: string | null;
+    target_id?: number | null;
+    is_read: boolean;
+    created_at: string;
+}
+
+export interface SearchResults {
+    users: UserPublicObject[];
+    posts: PostObject[];
+    hashtags: Hashtag[];
 }
