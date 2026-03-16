@@ -118,8 +118,8 @@ export default function ProfilePage() {
                 </div>
 
                 <CardContent className="px-6 pb-6 pt-0">
-                    <div className="-mt-14 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end">
-                        <Avatar className="h-28 w-28 border-4 border-white shadow-sm md:h-32 md:w-32">
+                    <div className="flex flex-col gap-6 md:flex-row md:items-start md:pt-4">
+                        <Avatar className="-mt-12 h-24 w-24 border-4 border-white shadow-sm md:-mt-16 md:h-32 md:w-32">
                             <AvatarImage src={resolveMedia(profileUser.avatar)} />
                             <AvatarFallback className="text-3xl font-semibold">
                                 {profileUser.username[0]?.toUpperCase()}
@@ -130,7 +130,7 @@ export default function ProfilePage() {
                             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <h1 className="text-3xl font-semibold tracking-tight">
+                                        <h1 className="text-[28px] font-semibold tracking-tight">
                                             {profileUser.username}
                                         </h1>
                                         {!isOwnProfile && profileUser.is_following && (
@@ -150,7 +150,11 @@ export default function ProfilePage() {
                                     </Button>
                                 ) : (
                                     <div className="flex gap-2">
-                                        <Button onClick={handleFollow} disabled={followLoading}>
+                                        <Button
+                                            onClick={handleFollow}
+                                            disabled={followLoading}
+                                            variant={profileUser.is_following ? "secondary" : "default"}
+                                        >
                                             <UserPlus2 className="mr-2 h-4 w-4" />
                                             {profileUser.is_following ? "Following" : "Follow"}
                                         </Button>

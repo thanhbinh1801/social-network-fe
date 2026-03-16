@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LoaderCircle, Sparkles } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,11 +60,10 @@ export default function SuggestionsPanel() {
     };
 
     return (
-        <Card className="border-border/70 bg-card/95 shadow-sm">
-            <CardHeader className="pb-3">
+        <Card className="border-0 bg-transparent shadow-none">
+            <CardHeader className="pb-3 px-4 pt-4">
                 <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <Sparkles className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-[14px] font-semibold text-muted-foreground">
                         Suggested for you
                     </CardTitle>
                     <Badge variant="secondary" className="rounded-full">
@@ -72,7 +71,7 @@ export default function SuggestionsPanel() {
                     </Badge>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 pb-4">
                 {loading ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -84,14 +83,14 @@ export default function SuggestionsPanel() {
                     </p>
                 ) : (
                     users.slice(0, 5).map((user) => (
-                        <div key={user.id} className="flex items-center gap-3">
+                        <div key={user.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-black/5">
                             <Link to={`/profile/${user.id}`} className="flex min-w-0 flex-1 items-center gap-3">
-                                <Avatar className="h-11 w-11 border">
+                                <Avatar className="h-10 w-10">
                                     <AvatarImage src={resolveMedia(user.avatar)} />
                                     <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold">{user.username}</p>
+                                    <p className="truncate text-[14px] font-bold">{user.username}</p>
                                     <p className="truncate text-xs text-muted-foreground">
                                         {user.bio || `${user.followers_count} followers`}
                                     </p>
@@ -99,7 +98,8 @@ export default function SuggestionsPanel() {
                             </Link>
                             <Button
                                 size="sm"
-                                variant={user.is_following ? "secondary" : "default"}
+                                variant="ghost"
+                                className={user.is_following ? "h-auto px-0 py-0 text-[13px] font-semibold text-foreground hover:bg-transparent hover:opacity-70" : "h-auto px-0 py-0 text-[13px] font-bold text-primary hover:bg-transparent hover:text-primary/80"}
                                 disabled={pendingId === user.id}
                                 onClick={() => handleFollow(user)}
                             >

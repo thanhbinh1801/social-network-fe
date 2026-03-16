@@ -3,7 +3,6 @@ import { Globe, ImagePlus, Lock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
     Select,
@@ -60,21 +59,19 @@ export default function CreatePostBox({ onPostCreated }: Props) {
 
     return (
         <>
-            <Card className="border-border/70 bg-gradient-to-br from-card via-card to-secondary/20 shadow-sm">
-                <CardContent className="flex items-center gap-3 p-4">
-                    <Avatar className="h-11 w-11 border">
-                        <AvatarImage src={resolveMedia(user?.avatar)} />
-                        <AvatarFallback>{user?.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
-                    </Avatar>
-                    <button
-                        className="flex-1 rounded-full border bg-background px-4 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-secondary/40"
-                        onClick={() => setOpen(true)}
-                    >
-                        Share an update, thought, or question...
-                    </button>
-                    <Button onClick={() => setOpen(true)}>Post</Button>
-                </CardContent>
-            </Card>
+            <div className="mb-4 flex items-center gap-3 rounded-lg border bg-card p-4 shadow-sm">
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src={resolveMedia(user?.avatar)} />
+                    <AvatarFallback>{user?.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+                </Avatar>
+                <button
+                    className="flex-1 rounded-full border border-border bg-muted/30 px-4 py-2.5 text-left text-[14px] text-muted-foreground transition-colors hover:bg-muted/50"
+                    onClick={() => setOpen(true)}
+                >
+                    Share an update, thought, or question...
+                </button>
+                <Button variant="ghost" className="font-semibold text-primary hover:bg-transparent" onClick={() => setOpen(true)}>Post</Button>
+            </div>
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-[560px]">

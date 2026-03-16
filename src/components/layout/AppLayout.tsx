@@ -39,21 +39,18 @@ export default function AppLayout() {
     };
 
     return (
-        <div className="min-h-dvh bg-[radial-gradient(circle_at_top,#ffffff_0%,#f7f8fb_45%,#eef2ff_100%)]">
-            <div className="mx-auto grid min-h-dvh max-w-[1440px] gap-6 px-4 py-4 lg:grid-cols-[240px_minmax(0,1fr)_320px]">
+        <div className="min-h-dvh bg-background">
+            <div className="mx-auto grid min-h-dvh max-w-[1440px] gap-6 px-1 py-4 lg:grid-cols-[240px_minmax(0,1fr)_320px] lg:px-2 xl:px-8">
                 <aside className="hidden lg:block">
-                    <div className="sticky top-4 flex min-h-[calc(100dvh-2rem)] flex-col rounded-3xl border bg-card/90 p-4 shadow-sm backdrop-blur">
-                        <Link to="/" className="mb-6 flex items-center gap-3 px-2">
+                    <div className="sticky top-4 flex min-h-[calc(100dvh-2rem)] flex-col bg-background py-4">
+                        <Link to="/" className="mb-8 flex items-center gap-3 px-3">
                             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                                 SN
                             </div>
-                            <div>
-                                <p className="font-semibold">SocialNet</p>
-                                <p className="text-xs text-muted-foreground">Frontend integration</p>
-                            </div>
+                            <span className="font-semibold text-xl tracking-tight">SocialNet</span>
                         </Link>
 
-                        <nav className="space-y-1">
+                        <nav className="space-y-2">
                             {navItems.map(({ to, icon: Icon, label, end }) => (
                                 <NavLink
                                     key={label}
@@ -61,22 +58,26 @@ export default function AppLayout() {
                                     end={end}
                                     className={({ isActive }) =>
                                         cn(
-                                            "flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors",
+                                            "flex items-center gap-4 rounded-lg px-3 py-3 text-[15px] transition-all hover:bg-black/5 active:opacity-70",
                                             isActive
-                                                ? "bg-primary text-primary-foreground"
-                                                : "hover:bg-secondary/70"
+                                                ? "font-bold"
+                                                : "font-normal"
                                         )
                                     }
                                 >
-                                    <Icon className="h-4 w-4" />
-                                    {label}
+                                    {({ isActive }) => (
+                                        <>
+                                            <Icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
+                                            <span>{label}</span>
+                                        </>
+                                    )}
                                 </NavLink>
                             ))}
                         </nav>
 
-                        <div className="mt-auto rounded-2xl border bg-secondary/25 p-3">
-                            <Link to={profileHref} className="flex items-center gap-3">
-                                <Avatar className="h-11 w-11 border">
+                        <div className="mt-auto px-1">
+                            <Link to={profileHref} className="flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-black/5">
+                                <Avatar className="h-8 w-8 border">
                                     <AvatarImage src={resolveMedia(user?.avatar)} />
                                     <AvatarFallback>{user?.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
                                 </Avatar>
@@ -87,10 +88,10 @@ export default function AppLayout() {
                             </Link>
                             <Button
                                 variant="ghost"
-                                className="mt-3 w-full justify-start"
+                                className="mt-2 w-full justify-start gap-4 px-2 py-6 text-[15px] font-normal hover:bg-black/5"
                                 onClick={handleLogout}
                             >
-                                <LogOut className="mr-2 h-4 w-4" />
+                                <LogOut className="h-6 w-6 stroke-[1.5px]" />
                                 Log out
                             </Button>
                         </div>
@@ -108,7 +109,7 @@ export default function AppLayout() {
                 </aside>
             </div>
 
-            <nav className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full border bg-card/95 px-3 py-2 shadow-lg backdrop-blur lg:hidden">
+            <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t bg-background px-3 py-2 sm:hidden">
                 {navItems.slice(0, 5).map(({ to, icon: Icon, label, end }) => (
                     <NavLink
                         key={label}
@@ -116,12 +117,14 @@ export default function AppLayout() {
                         end={end}
                         className={({ isActive }) =>
                             cn(
-                                "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
-                                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                                "flex h-12 w-12 items-center justify-center rounded-xl transition-all active:opacity-70",
+                                isActive ? "text-foreground" : "text-foreground"
                             )
                         }
                     >
-                        <Icon className="h-5 w-5" />
+                        {({ isActive }) => (
+                            <Icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
+                        )}
                     </NavLink>
                 ))}
             </nav>

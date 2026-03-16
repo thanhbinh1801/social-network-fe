@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -86,11 +85,11 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
         ) : null;
 
     return (
-        <Card className="mb-5 overflow-hidden border-border/70 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 border-b px-4 py-3">
+        <div className="mb-5 overflow-hidden rounded-[8px] border border-border bg-card">
+            <div className="flex flex-row items-center justify-between gap-3 px-4 py-3">
                 <div className="flex min-w-0 items-center gap-3">
                     <Link to={`/profile/${post.author.id}`}>
-                        <Avatar className="h-10 w-10 border">
+                        <Avatar className="h-9 w-9">
                             <AvatarImage src={resolveMedia(post.author.avatar)} />
                             <AvatarFallback>{post.author.username[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -137,10 +136,10 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
                         </DropdownMenu>
                     )}
                 </div>
-            </CardHeader>
+            </div>
 
             {post.media.length > 0 && (
-                <div className="border-b bg-secondary/20">
+                <div className="bg-black/5">
                     {post.media.map((media) =>
                         media.media_type === "image" ? (
                             <img
@@ -161,7 +160,7 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
                 </div>
             )}
 
-            <CardContent className="space-y-4 px-4 py-4">
+            <div className="space-y-3 px-4 py-3 pb-4">
                 {(post.body || post.hashtags.length > 0) && (
                     <div className="text-sm leading-6">
                         <Link to={`/profile/${post.author.id}`} className="mr-2 font-semibold">
@@ -180,7 +179,7 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
                     </div>
                 )}
 
-                <div className="flex items-center gap-2 border-t pt-3">
+                <div className="flex items-center gap-2 pt-1">
                     <ReactionButton
                         postId={post.id}
                         reactionsCount={reactionsCount}
@@ -222,13 +221,13 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
                         View all {post.comments_count} comment{post.comments_count === 1 ? "" : "s"}
                     </button>
                 )}
-            </CardContent>
+            </div>
 
             {showComments && (
                 <div className="border-t">
                     <CommentSection postId={post.id} />
                 </div>
             )}
-        </Card>
+        </div>
     );
 }
