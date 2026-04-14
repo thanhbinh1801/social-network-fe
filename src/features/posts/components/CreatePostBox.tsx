@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Globe, ImagePlus, Lock, Users } from "lucide-react";
+import { useRef, useState } from "react";
+import { Globe, ImagePlus, Lock, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -32,18 +32,21 @@ export default function CreatePostBox({ onPostCreated }: Props) {
     const [open, setOpen] = useState(false);
     const [body, setBody] = useState("");
     const [visibility, setVisibility] = useState<"public" | "friends" | "private">("public");
+    const [files, setFiles] = useState<File[]>([]);
     const [loading, setLoading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        if (!body.trim()) return;
+        if (!body.trim() && files.length === 0) return;
 
         setLoading(true);
         try {
-            const formData = buildPostFormData({ body: body.trim(), visibility });
+            const formData = buildPostFormData({ body: body.trim(), visibility, media: files });
             const { data } = await postsApi.create(formData);
             onPostCreated(data);
             setBody("");
+            setFiles([]);
             setOpen(false);
             toast.success("Post published!");
         } catch {
@@ -99,11 +102,51 @@ export default function CreatePostBox({ onPostCreated }: Props) {
                             className="resize-none border-0 bg-secondary/30 shadow-none focus-visible:ring-1"
                         />
 
-                        <div className="flex flex-col gap-3 rounded-2xl border bg-secondary/20 p-4 md:flex-row md:items-center md:justify-between">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <ImagePlus className="h-4 w-4" />
-                                Media upload can be added next with the same endpoint.
+                        {files.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {files.map((file, index) => (
+                                    <div key={index} className="relative h-20 w-20 overflow-hidden rounded-md border">
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt="Preview"
+                                            className="h-full w-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFiles(files.filter((_, i) => i !== index));
+                                            }}
+                                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
+                        )}
+
+                        <div className="flex flex-col gap-3 rounded-2xl border bg-secondary/20 p-4 md:flex-row md:items-center md:justify-between">
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                            >
+                                <ImagePlus className="h-4 w-4" />
+                                <span className="font-medium">Add photos</span>
+                            </button>
+                            <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={(e) => {
+                                    if (e.target.files?.length) {
+                                        setFiles((prev) => [...prev, ...Array.from(e.target.files as FileList)]);
+                                    }
+                                }}
+                            />
                             <Select
                                 value={visibility}
                                 onValueChange={(value) =>
@@ -130,7 +173,7 @@ export default function CreatePostBox({ onPostCreated }: Props) {
                             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading || !body.trim()}>
+                            <Button type="submit" disabled={loading || (!body.trim() && files.length === 0)}>
                                 {loading ? "Posting..." : "Publish"}
                             </Button>
                         </div>

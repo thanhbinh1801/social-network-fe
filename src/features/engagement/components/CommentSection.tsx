@@ -5,7 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { engagementApi } from "@/features/engagement/api/engagement.api";
 import type { CommentObject } from "@/types";
 import { toast } from "sonner";
-import { resolveMedia } from "@/lib/config";
+import { resolveMedia, WS_BASE_URL } from "@/lib/config";
+import { authStorage } from "@/lib/auth";
 
 interface Props { postId: number }
 
@@ -16,15 +17,61 @@ export default function CommentSection({ postId }: Props) {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
+        let isMounted = true;
+        
         engagementApi.getComments(postId)
             .then((data) => {
-                setComments(data);
-                setLoading(false);
+                if (isMounted) {
+                    setComments(data);
+                    setLoading(false);
+                }
             })
             .catch(() => {
-                toast.error("Failed to load comments.");
-                setLoading(false);
+                if (isMounted) {
+                    toast.error("Failed to load comments.");
+                    setLoading(false);
+                }
             });
+
+        const token = authStorage.getAccess();
+        let ws: WebSocket | null = null;
+        if (token) {
+            ws = new WebSocket(`${WS_BASE_URL}/ws/posts/${postId}/comments/?token=${token}`);
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.comment) {
+                        const newComment = data.comment as CommentObject;
+                        setComments((prev) => {
+                            // Deduplicate if we created it ourselves
+                            if (prev.some((c) => c.id === newComment.id)) return prev;
+                            
+                            if (!newComment.parent) {
+                                return [newComment, ...prev];
+                            } else {
+                                return prev.map((c) => {
+                                    if (c.id === newComment.parent) {
+                                        return {
+                                            ...c,
+                                            replies: [...c.replies.filter((r) => r.id !== newComment.id), newComment],
+                                            replies_count: c.replies.filter((r) => r.id !== newComment.id).length + 1
+                                        };
+                                    }
+                                    return c;
+                                });
+                            }
+                        });
+                    }
+                } catch {
+                    // ignore
+                }
+            };
+        }
+
+        return () => {
+            isMounted = false;
+            if (ws) ws.close();
+        };
     }, [postId]);
 
     const handleSubmit = async (e: React.FormEvent) => {

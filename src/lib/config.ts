@@ -1,6 +1,7 @@
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string ?? "http://127.0.0.1:8000";
 
 export const API_BASE_URL = `${BACKEND_URL}/api`;
+export const WS_BASE_URL = BACKEND_URL.replace(/^http/, "ws");
 
 export function resolveMedia(url: string | null | undefined): string {
     if (!url) return "";

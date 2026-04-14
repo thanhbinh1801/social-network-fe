@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { profileApi } from "@/features/profile/api/profile.api";
+import PostDetailDialog from "../components/PostDetailDialog";
 import { resolveMedia } from "@/lib/config";
 import { useAuthStore } from "@/store/auth.store";
 import type { FollowRelation, PostObject, UserPublicObject } from "@/types";
@@ -22,6 +23,7 @@ export default function ProfilePage() {
     const [following, setFollowing] = useState<FollowRelation[]>([]);
     const [loading, setLoading] = useState(true);
     const [followLoading, setFollowLoading] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<PostObject | null>(null);
 
     const apiId: "me" | number = id === "me" ? "me" : Number(id);
     const isOwnProfile = id === "me" || currentUser?.id === profileUser?.id;
@@ -77,6 +79,22 @@ export default function ProfilePage() {
             toast.error("Could not update follow status.");
         } finally {
             setFollowLoading(false);
+        }
+    };
+
+    const handlePostUpdate = (updatedPost: PostObject) => {
+        setPosts((current) =>
+            current.map((p) => (p.id === updatedPost.id ? updatedPost : p))
+        );
+        setSelectedPost((current) => 
+            current?.id === updatedPost.id ? updatedPost : current
+        );
+    };
+
+    const handlePostDelete = (postId: number) => {
+        setPosts((current) => current.filter((p) => p.id !== postId));
+        if (selectedPost?.id === postId) {
+            setSelectedPost(null);
         }
     };
 
@@ -218,7 +236,11 @@ export default function ProfilePage() {
                             ) : (
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                     {posts.map((post) => (
-                                        <PostPreview key={post.id} post={post} />
+                                        <PostPreview 
+                                            key={post.id} 
+                                            post={post} 
+                                            onClick={() => setSelectedPost(post)} 
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -234,6 +256,16 @@ export default function ProfilePage() {
                     </Tabs>
                 </CardContent>
             </Card>
+
+            <PostDetailDialog
+                post={selectedPost}
+                open={!!selectedPost}
+                onOpenChange={(open) => {
+                    if (!open) setSelectedPost(null);
+                }}
+                onUpdate={handlePostUpdate}
+                onDelete={handlePostDelete}
+            />
         </div>
     );
 }
@@ -247,11 +279,14 @@ function StatInline({ label, value }: { label: string; value: number }) {
     );
 }
 
-function PostPreview({ post }: { post: PostObject }) {
+function PostPreview({ post, onClick }: { post: PostObject; onClick?: () => void }) {
     const preview = post.media[0];
 
     return (
-        <div className="group overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div 
+            className="group overflow-hidden rounded-2xl border bg-card shadow-sm cursor-pointer"
+            onClick={onClick}
+        >
             <div className="aspect-square overflow-hidden bg-secondary/30">
                 {preview?.media_type === "image" ? (
                     <img

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Bookmark, Lock, MessageCircle, MoreHorizontal, Send, Trash2, Users } from "lucide-react";
+import { Bookmark, Lock, MessageCircle, MoreHorizontal, Send, Trash2, Users, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,6 +34,7 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
     const [saved, setSaved] = useState(post.is_saved);
     const [saving, setSaving] = useState(false);
     const [sharing, setSharing] = useState(false);
+    const [updating, setUpdating] = useState(false);
 
     const handleDelete = async () => {
         try {
@@ -77,12 +78,54 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
         }
     };
 
-    const visibilityIcon =
+    const handleVisibilityChange = async (value: string) => {
+        if (!isOwner) return;
+        setUpdating(true);
+        try {
+            const fd = new FormData();
+            fd.append("visibility", value);
+            const { data } = await postsApi.update(post.id, fd);
+            onUpdate?.(data);
+            toast.success("Post visibility updated.");
+        } catch {
+            toast.error("Failed to update visibility.");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const visibilityItems = [
+        { value: "public", icon: Globe },
+        { value: "friends", icon: Users },
+        { value: "private", icon: Lock },
+    ] as const;
+
+    const selectedVisibility =
+        visibilityItems.find((item) => item.value === post.visibility) ?? visibilityItems[0];
+    const VisibilityIcon = selectedVisibility.icon;
+
+    const visibilityDisplay = isOwner ? (
+        <div className="flex items-center">
+            <span className="sr-only">Visibility</span>
+            <select
+                disabled={updating}
+                value={post.visibility}
+                onChange={(e) => handleVisibilityChange(e.target.value)}
+                className="bg-transparent text-xs text-muted-foreground outline-none cursor-pointer hover:underline disabled:opacity-50"
+            >
+                <option value="public">Public</option>
+                <option value="friends">Friends</option>
+                <option value="private">Private</option>
+            </select>
+            <VisibilityIcon className="h-3 w-3 ml-1 text-muted-foreground" />
+        </div>
+    ) : (
         post.visibility === "private" ? (
             <Lock className="h-3.5 w-3.5" />
         ) : post.visibility === "friends" ? (
             <Users className="h-3.5 w-3.5" />
-        ) : null;
+        ) : <Globe className="h-3.5 w-3.5" />
+    );
 
     return (
         <div className="mb-5 overflow-hidden rounded-[8px] border border-border bg-card">
@@ -102,7 +145,8 @@ export default function PostCard({ post, onDelete, onUpdate }: PostCardProps) {
                             {post.author.username}
                         </Link>
                         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                            {visibilityIcon}
+                            {visibilityDisplay}
+                            <span>•</span>
                             <span>
                                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                             </span>

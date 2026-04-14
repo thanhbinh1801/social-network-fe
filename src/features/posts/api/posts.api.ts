@@ -5,6 +5,7 @@ import type { PaginatedResponse, PostObject } from "@/types";
 type CreatePostData = {
     body?: string;
     visibility?: "public" | "friends" | "private";
+    media?: File[];
 };
 
 export const postsApi = {
@@ -53,5 +54,13 @@ export function buildPostFormData(data: CreatePostData): FormData {
     const fd = new FormData();
     if (data.body) fd.append("body", data.body);
     fd.append("visibility", data.visibility ?? "public");
+    
+    if (data.media) {
+        data.media.forEach((file) => {
+            fd.append("uploaded_media", file);
+            fd.append("media_types", file.type.startsWith("video/") ? "video" : "image");
+        });
+    }
+    
     return fd;
 }
