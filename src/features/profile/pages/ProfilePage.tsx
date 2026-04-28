@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Grid3x3, MapPin, MessageCircle, UserPlus2 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [followLoading, setFollowLoading] = useState(false);
     const [selectedPost, setSelectedPost] = useState<PostObject | null>(null);
+    const navigate = useNavigate();
 
     const apiId: "me" | number = id === "me" ? "me" : Number(id);
     const isOwnProfile = id === "me" || currentUser?.id === profileUser?.id;
@@ -176,7 +177,14 @@ export default function ProfilePage() {
                                             <UserPlus2 className="mr-2 h-4 w-4" />
                                             {profileUser.is_following ? "Following" : "Follow"}
                                         </Button>
-                                        <Button variant="secondary">
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() =>
+                                                navigate(`/chat?userId=${profileUser.id}`, {
+                                                    state: { prefillUser: profileUser },
+                                                })
+                                            }
+                                        >
                                             <MessageCircle className="mr-2 h-4 w-4" />
                                             Message
                                         </Button>

@@ -9,6 +9,7 @@ import SavedPostsPage from "@/features/posts/pages/SavedPostsPage";
 import ProfilePage from "@/features/profile/pages/ProfilePage";
 import SettingsPage from "@/features/profile/pages/SettingsPage";
 import DiscoverPage from "@/features/search/pages/DiscoverPage";
+import ChatPage from "@/features/chat/pages/ChatPage";
 import { useAuthStore } from "@/store/auth.store";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -62,6 +63,7 @@ export default function AppRouter() {
                     <Route path="/" element={<FeedPage />} />
                     <Route path="/discover" element={<DiscoverPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
+                    <Route path="/chat" element={<ChatPage />} />
                     <Route path="/saved" element={<SavedPostsPage />} />
                     <Route path="/profile/:id" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
