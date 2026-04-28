@@ -1,4 +1,4 @@
-import { Bell, Bookmark, Compass, Home, LogOut, Settings, User } from "lucide-react";
+import { Bell, Bookmark, Compass, Home, LogOut, MessageCircle, Settings, User } from "lucide-react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export default function AppLayout() {
     const navItems = [
         { to: "/", icon: Home, label: "Home", end: true },
         { to: "/discover", icon: Compass, label: "Discover" },
+        { to: "/chat", icon: MessageCircle, label: "Messages" },
         { to: "/notifications", icon: Bell, label: "Notifications" },
         { to: "/saved", icon: Bookmark, label: "Saved" },
         { to: profileHref, icon: User, label: "Profile" },
