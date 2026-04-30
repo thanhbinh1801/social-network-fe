@@ -29,8 +29,8 @@ export const authApi = {
     resetPassword: (data: {
         email: string;
         code: string;
-        password: string;
-        password_confirm: string;
+        new_password: string;
+        new_password_confirm: string;
     }) => api.post<{ detail: string }>("/auth/reset-password/", data),
 
     me: () => api.get<UserPublicObject>("/users/me/"),

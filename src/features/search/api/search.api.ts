@@ -1,7 +1,7 @@
 import { unwrapList } from "@/lib/api";
 import { api } from "@/lib/axios";
 import type {
-    Hashtag,
+    HashtagStat,
     PaginatedResponse,
     SearchResults,
     UserPublicObject,
@@ -12,7 +12,7 @@ export const searchApi = {
         api.get<SearchResults>("/search/", { params: { q: query, type } }),
 
     getTrending: async () => {
-        const res = await api.get<Hashtag[] | PaginatedResponse<Hashtag>>("/search/trending/");
+        const res = await api.get<HashtagStat[] | PaginatedResponse<HashtagStat>>("/search/trending/");
         return unwrapList(res.data);
     },
 

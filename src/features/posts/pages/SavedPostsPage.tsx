@@ -14,7 +14,7 @@ export default function SavedPostsPage() {
         postsApi
             .getSaved()
             .then(setPosts)
-            .catch(() => toast.error("Khong tai duoc bai viet da luu."))
+            .catch(() => toast.error("Could not load saved posts."))
             .finally(() => setLoading(false));
     }, []);
 
@@ -29,7 +29,7 @@ export default function SavedPostsPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Danh sach bai viet duoc lay tu `GET /api/posts/saved/`.
+                        This list is loaded from `GET /api/posts/saved/`.
                     </p>
                 </CardContent>
             </Card>
@@ -43,7 +43,7 @@ export default function SavedPostsPage() {
             ) : posts.length === 0 ? (
                 <Card>
                     <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                        Ban chua luu bai viet nao.
+                        You have not saved any posts yet.
                     </CardContent>
                 </Card>
             ) : (

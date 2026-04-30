@@ -10,7 +10,7 @@ import PostCard from "@/features/posts/components/PostCard";
 import { searchApi } from "@/features/search/api/search.api";
 import { postsApi } from "@/features/posts/api/posts.api";
 import { resolveMedia } from "@/lib/config";
-import type { Hashtag, PostObject, SearchResults, UserPublicObject } from "@/types";
+import type { HashtagStat, PostObject, SearchResults, UserPublicObject } from "@/types";
 import { toast } from "sonner";
 
 const emptyResults: SearchResults = { users: [], posts: [], hashtags: [] };
@@ -19,7 +19,7 @@ export default function DiscoverPage() {
     const [query, setQuery] = useState("");
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState<SearchResults>(emptyResults);
-    const [trending, setTrending] = useState<Hashtag[]>([]);
+    const [trending, setTrending] = useState<HashtagStat[]>([]);
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [tagPosts, setTagPosts] = useState<PostObject[]>([]);
     const [loadingTagPosts, setLoadingTagPosts] = useState(false);
@@ -28,7 +28,7 @@ export default function DiscoverPage() {
         searchApi
             .getTrending()
             .then(setTrending)
-            .catch(() => toast.error("Khong tai duoc trending hashtags."));
+            .catch(() => toast.error("Could not load trending hashtags."));
     }, []);
 
     const runSearch = async () => {
@@ -43,7 +43,7 @@ export default function DiscoverPage() {
             const { data } = await searchApi.search(query.trim(), "all");
             setResults(data);
         } catch {
-            toast.error("Tim kiem that bai.");
+            toast.error("Search failed.");
         } finally {
             setSearching(false);
         }
@@ -56,7 +56,7 @@ export default function DiscoverPage() {
             const data = await postsApi.getByHashtag(tag);
             setTagPosts(data);
         } catch {
-            toast.error("Khong tai duoc bai viet theo hashtag.");
+            toast.error("Could not load posts for this hashtag.");
         } finally {
             setLoadingTagPosts(false);
         }
@@ -93,7 +93,7 @@ export default function DiscoverPage() {
                     <div className="flex flex-wrap gap-2">
                         {trending.map((tag) => (
                             <Button
-                                key={tag.id}
+                                key={tag.name}
                                 variant={selectedTag === tag.name ? "default" : "secondary"}
                                 size="sm"
                                 onClick={() => loadHashtagPosts(tag.name)}
@@ -179,7 +179,7 @@ export default function DiscoverPage() {
                                 <div className="flex flex-wrap gap-2">
                                     {results.hashtags.map((tag) => (
                                         <Badge
-                                            key={tag.id}
+                                            key={tag.name}
                                             variant="secondary"
                                             className="cursor-pointer rounded-full"
                                             onClick={() => loadHashtagPosts(tag.name)}

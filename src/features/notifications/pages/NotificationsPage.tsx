@@ -21,7 +21,7 @@ export default function NotificationsPage() {
             const data = await notificationsApi.getAll();
             setItems(data);
         } catch {
-            toast.error("Khong tai duoc notifications.");
+            toast.error("Could not load notifications.");
         } finally {
             setLoading(false);
         }
@@ -38,9 +38,9 @@ export default function NotificationsPage() {
         try {
             await notificationsApi.markRead();
             setItems((prev) => prev.map((item) => ({ ...item, is_read: true })));
-            toast.success("Da danh dau tat ca la da doc.");
+            toast.success("All notifications marked as read.");
         } catch {
-            toast.error("Khong danh dau duoc notifications.");
+            toast.error("Could not mark notifications as read.");
         } finally {
             setMarkingAll(false);
         }
@@ -53,7 +53,7 @@ export default function NotificationsPage() {
                 prev.map((item) => (item.id === id ? { ...item, is_read: true } : item))
             );
         } catch {
-            toast.error("Khong cap nhat duoc notification.");
+            toast.error("Could not update the notification.");
         }
     };
 
@@ -84,7 +84,7 @@ export default function NotificationsPage() {
                         <p className="py-8 text-sm text-muted-foreground">Loading notifications...</p>
                     ) : items.length === 0 ? (
                         <p className="py-8 text-sm text-muted-foreground">
-                            Chua co thong bao nao.
+                            No notifications yet.
                         </p>
                     ) : (
                         items.map((item) => (

@@ -100,7 +100,9 @@ export default function AppLayout() {
                 </aside>
 
                 <main className="min-w-0 min-h-[calc(100dvh-2rem)]">
-                    <Outlet />
+                    <div className="mx-auto h-full w-full max-w-[980px]">
+                        <Outlet />
+                    </div>
                 </main>
 
                 <aside className="hidden lg:block">

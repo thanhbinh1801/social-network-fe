@@ -24,9 +24,14 @@ export interface PostMedia {
     media_type: "image" | "video";
 }
 
-export interface Hashtag {
+export interface HashtagObject {
     id: number;
     name: string;
+}
+
+export interface HashtagStat {
+    name: string;
+    posts_count: number;
 }
 
 export interface PostObject {
@@ -35,7 +40,7 @@ export interface PostObject {
     body: string;
     visibility: "public" | "friends" | "private";
     media: PostMedia[];
-    hashtags: Hashtag[];
+    hashtags: HashtagObject[];
     reactions_count: number;
     comments_count: number;
     is_saved: boolean;
@@ -93,6 +98,7 @@ export interface NotificationObject {
     message?: string;
     target_type?: string | null;
     target_id?: number | null;
+    target_object_id?: number | null;
     is_read: boolean;
     created_at: string;
 }
@@ -100,5 +106,5 @@ export interface NotificationObject {
 export interface SearchResults {
     users: UserPublicObject[];
     posts: PostObject[];
-    hashtags: Hashtag[];
+    hashtags: HashtagStat[];
 }

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { chatApi } from "@/features/chat/api/chat.api";
 import ChatLayout from "@/features/chat/components/ChatLayout";
 import type { ChatConversation, ChatMessage } from "@/features/chat/types";
@@ -406,10 +405,10 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="mx-auto w-full max-w-xl px-4 py-4">
-            <Card className="h-[calc(100dvh-3rem)] overflow-hidden">
+        <div className="w-full px-4 py-4">
+            <div className="h-[calc(100dvh-3rem)] w-full overflow-hidden">
                 {viewMode === "list" && !isDirectMode ? (
-                    <div className="h-full overflow-y-auto p-3">
+                    <div className="h-full overflow-y-auto rounded-xl border bg-background p-3">
                         <h2 className="mb-3 text-2xl font-semibold">Messages</h2>
                         <div className="space-y-2">
                             {conversations.map((conversation) => {
@@ -439,7 +438,7 @@ export default function ChatPage() {
                                 );
                             })}
                             {conversations.length === 0 ? (
-                                <p className="px-2 py-3 text-sm text-muted-foreground">Chua co cuoc tro chuyen nao.</p>
+                                <p className="px-2 py-3 text-sm text-muted-foreground">No conversations yet.</p>
                             ) : null}
                         </div>
                     </div>
@@ -471,7 +470,7 @@ export default function ChatPage() {
                         onSend={handleSend}
                     />
                 ) : null}
-            </Card>
+            </div>
         </div>
     );
 }

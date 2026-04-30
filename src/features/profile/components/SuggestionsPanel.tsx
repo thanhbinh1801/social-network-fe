@@ -19,7 +19,7 @@ export default function SuggestionsPanel() {
         profileApi
             .getSuggestions()
             .then(setUsers)
-            .catch(() => toast.error("Khong tai duoc goi y theo doi."))
+            .catch(() => toast.error("Could not load follow suggestions."))
             .finally(() => setLoading(false));
     }, []);
 
@@ -53,7 +53,7 @@ export default function SuggestionsPanel() {
                         : item
                 )
             );
-            toast.error("Khong cap nhat duoc theo doi.");
+            toast.error("Could not update the follow state.");
         } finally {
             setPendingId(null);
         }
@@ -79,7 +79,7 @@ export default function SuggestionsPanel() {
                     </div>
                 ) : users.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                        Chua co goi y nao luc nay.
+                        No suggestions available right now.
                     </p>
                 ) : (
                     users.slice(0, 5).map((user) => (
