@@ -44,9 +44,11 @@ export default function ChatPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [onlineStatus, setOnlineStatus] = useState("Active recently");
     const [isPeerTyping, setIsPeerTyping] = useState(false);
+    const [unreadConversationIds, setUnreadConversationIds] = useState<Set<number>>(new Set());
 
     const socketRef = useRef<WebSocket | null>(null);
     const socketConversationRef = useRef<number | null>(null);
+    const locallyReadLastMessageByConversationRef = useRef<Map<number, string | number>>(new Map());
     const directInitRef = useRef<string | null>(null);
     const typingTimeoutRef = useRef<number | null>(null);
     const reconnectTimeoutRef = useRef<number | null>(null);
@@ -54,6 +56,9 @@ export default function ChatPage() {
     // Use a ref so socket handlers always read the latest `me` without stale closure
     const meRef = useRef(me);
     useEffect(() => { meRef.current = me; }, [me]);
+    // Track viewMode in a ref so the socket closure never reads a stale value
+    const viewModeRef = useRef(viewMode);
+    useEffect(() => { viewModeRef.current = viewMode; }, [viewMode]);
 
     const directUserIdParam = searchParams.get("userId");
     const isDirectMode = Boolean(directUserIdParam);
@@ -77,11 +82,33 @@ export default function ChatPage() {
     const loadConversations = async () => {
         const data = await chatApi.getConversations();
         setConversations(data);
+        const serverUnread = new Set<number>();
+        for (const conversation of data) {
+            const lastMessage = conversation.last_message;
+            if (!lastMessage || !me) continue;
+            if (lastMessage.sender.id === me.id || lastMessage.is_seen) continue;
+
+            const locallyReadLastMessageId = locallyReadLastMessageByConversationRef.current.get(conversation.id);
+            const isAlreadyReadLocally = locallyReadLastMessageId === lastMessage.id;
+            if (!isAlreadyReadLocally) {
+                serverUnread.add(conversation.id);
+            }
+        }
+        const filteredUnread = serverUnread;
+        setUnreadConversationIds(filteredUnread);
     };
 
     useEffect(() => {
         void loadConversations();
     }, []);
+
+    useEffect(() => {
+        if (viewMode !== "list") return;
+        const intervalId = window.setInterval(() => {
+            void loadConversations();
+        }, 1500);
+        return () => window.clearInterval(intervalId);
+    }, [viewMode, me]);
 
     const connectSocket = (conversationId: number, targetUserId?: number) => {
         if (
@@ -102,14 +129,15 @@ export default function ChatPage() {
 
                 if (data.event === "receive_message") {
                     const incomingId = data.payload.id;
+                    const currentMe = meRef.current;
+                    const isFromOther = currentMe && data.payload.sender_id !== currentMe.id;
+
                     setMessages((prev) => {
                         // Skip if message already exists (dedup by real ID)
                         if (prev.some((m) => m.id === incomingId)) return prev;
 
-                        const currentMe = meRef.current;
-
                         // Own message: replace optimistic temp OR skip (REST already committed it)
-                        if (currentMe && data.payload.sender_id === currentMe.id) {
+                        if (!isFromOther) {
                             if (data.payload.temp_id) {
                                 const hasTemp = prev.some((m) => String(m.id) === String(data.payload.temp_id));
                                 if (hasTemp) {
@@ -146,6 +174,31 @@ export default function ChatPage() {
                         };
                         return [...prev, { ...data.payload, sender }];
                     });
+
+                    // When message arrives from another user, update the conversation list
+                    // in real-time: bump last_message preview and mark as unread.
+                    if (isFromOther) {
+                        const incomingConvId: number = data.payload.conversation ?? conversationId;
+                        setConversations((prevConvs) =>
+                            prevConvs.map((conv) =>
+                                conv.id === incomingConvId
+                                    ? {
+                                          ...conv,
+                                          last_message: {
+                                              ...data.payload,
+                                              id: incomingId,
+                                              is_seen: false,
+                                          } as ChatMessage,
+                                      }
+                                    : conv
+                            )
+                        );
+                        // Mark unread only if we're not currently viewing this conversation
+                        if (socketConversationRef.current !== incomingConvId || viewModeRef.current !== "chat") {
+                            locallyReadLastMessageByConversationRef.current.delete(incomingConvId);
+                            setUnreadConversationIds((prev) => new Set([...prev, incomingConvId]));
+                        }
+                    }
                 }
 
 
@@ -194,6 +247,15 @@ export default function ChatPage() {
         setViewMode("chat");
         setOnlineStatus("Active recently");
         setIsPeerTyping(false);
+        // Clear unread indicator for this conversation
+        if (conversation.last_message?.id !== undefined && conversation.last_message?.id !== null) {
+            locallyReadLastMessageByConversationRef.current.set(conversation.id, conversation.last_message.id);
+        }
+        setUnreadConversationIds((prev) => {
+            const next = new Set(prev);
+            next.delete(conversation.id);
+            return next;
+        });
 
         const history = await chatApi.getMessagesByConversation(conversation.id);
         setMessages([...history].reverse());
@@ -417,6 +479,9 @@ export default function ChatPage() {
                                     : conversation.participants[0];
                                 if (!user) return null;
 
+                                const isUnread = unreadConversationIds.has(conversation.id);
+                                const lastBody = conversation.last_message?.body || "Sent an attachment";
+
                                 return (
                                     <Button
                                         key={conversation.id}
@@ -428,12 +493,23 @@ export default function ChatPage() {
                                             <AvatarImage src={resolveMedia(user.avatar)} />
                                             <AvatarFallback>{user.username.slice(0, 1).toUpperCase()}</AvatarFallback>
                                         </Avatar>
-                                        <div className="min-w-0 text-left">
-                                            <p className="truncate font-medium">{user.username}</p>
-                                            <p className="truncate text-xs text-muted-foreground">
-                                                {conversation.last_message?.body || "Sent an attachment"}
+                                        <div className="min-w-0 flex-1 text-left">
+                                            <p className={isUnread ? "truncate font-bold" : "truncate font-medium"}>
+                                                {user.username}
+                                            </p>
+                                            <p className={isUnread
+                                                ? "truncate text-xs font-semibold text-foreground"
+                                                : "truncate text-xs text-muted-foreground"
+                                            }>
+                                                {lastBody}
                                             </p>
                                         </div>
+                                        {isUnread && (
+                                            <span
+                                                className="ml-auto mb-1 h-2.5 w-2.5 shrink-0 self-end rounded-full bg-[#d97706]"
+                                                aria-label="Unread message"
+                                            />
+                                        )}
                                     </Button>
                                 );
                             })}
