@@ -80,7 +80,9 @@ export default function CommentSection({ postId }: Props) {
         setSubmitting(true);
         try {
             const { data } = await engagementApi.createComment(postId, body.trim());
-            setComments((prev) => [data, ...prev]);
+            setComments((prev) => (
+                prev.some((comment) => comment.id === data.id) ? prev : [data, ...prev]
+            ));
             setBody("");
         } catch {
             toast.error("Failed to post comment.");

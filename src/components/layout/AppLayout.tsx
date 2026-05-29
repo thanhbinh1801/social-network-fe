@@ -1,8 +1,11 @@
 import { Bell, Bookmark, Compass, Home, LogOut, MessageCircle, Settings, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { authApi } from "@/features/auth/api/auth.api";
+import { chatApi } from "@/features/chat/api/chat.api";
+import type { ChatConversation } from "@/features/chat/types";
 import SuggestionsPanel from "@/features/profile/components/SuggestionsPanel";
 import { authStorage } from "@/lib/auth";
 import { resolveMedia } from "@/lib/config";
@@ -14,7 +17,40 @@ export default function AppLayout() {
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
     const logout = useAuthStore((state) => state.logout);
+    const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     const profileHref = user?.id ? `/profile/${user.id}` : "/profile/me";
+
+    useEffect(() => {
+        if (!user) {
+            setHasUnreadMessages(false);
+            return;
+        }
+
+        let isMounted = true;
+        const conversationHasUnreadMessage = (conversation: ChatConversation) => {
+            const lastMessage = conversation.last_message;
+            return Boolean(lastMessage && lastMessage.sender.id !== user.id && !lastMessage.is_seen);
+        };
+
+        const refreshUnreadMessages = async () => {
+            try {
+                const conversations = await chatApi.getConversations();
+                if (isMounted) {
+                    setHasUnreadMessages(conversations.some(conversationHasUnreadMessage));
+                }
+            } catch {
+                // Keep the previous indicator state on transient failures.
+            }
+        };
+
+        void refreshUnreadMessages();
+        const intervalId = window.setInterval(refreshUnreadMessages, 3000);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(intervalId);
+        };
+    }, [user]);
 
     const navItems = [
         { to: "/", icon: Home, label: "Home", end: true },
@@ -52,7 +88,9 @@ export default function AppLayout() {
                         </Link>
 
                         <nav className="space-y-2">
-                            {navItems.map(({ to, icon: Icon, label, end }) => (
+                            {navItems.map(({ to, icon: Icon, label, end }) => {
+                                const showUnreadDot = label === "Messages" && hasUnreadMessages;
+                                return (
                                 <NavLink
                                     key={label}
                                     to={to}
@@ -68,12 +106,18 @@ export default function AppLayout() {
                                 >
                                     {({ isActive }) => (
                                         <>
-                                            <Icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
+                                            <span className="relative">
+                                                <Icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
+                                                {showUnreadDot && (
+                                                    <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#d97706]" />
+                                                )}
+                                            </span>
                                             <span>{label}</span>
                                         </>
                                     )}
                                 </NavLink>
-                            ))}
+                                );
+                            })}
                         </nav>
 
                         <div className="mt-auto px-1">
@@ -113,23 +157,31 @@ export default function AppLayout() {
             </div>
 
             <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t bg-background px-3 py-2 sm:hidden">
-                {navItems.slice(0, 5).map(({ to, icon: Icon, label, end }) => (
-                    <NavLink
-                        key={label}
-                        to={to}
-                        end={end}
-                        className={({ isActive }) =>
-                            cn(
-                                "flex h-12 w-12 items-center justify-center rounded-xl transition-all active:opacity-70",
-                                isActive ? "text-foreground" : "text-foreground"
-                            )
-                        }
-                    >
-                        {({ isActive }) => (
-                            <Icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
-                        )}
-                    </NavLink>
-                ))}
+                {navItems.slice(0, 5).map(({ to, icon: Icon, label, end }) => {
+                    const showUnreadDot = label === "Messages" && hasUnreadMessages;
+                    return (
+                        <NavLink
+                            key={label}
+                            to={to}
+                            end={end}
+                            className={({ isActive }) =>
+                                cn(
+                                    "flex h-12 w-12 items-center justify-center rounded-xl transition-all active:opacity-70",
+                                    isActive ? "text-foreground" : "text-foreground"
+                                )
+                            }
+                        >
+                            {({ isActive }) => (
+                                <span className="relative">
+                                    <Icon className={cn("h-6 w-6", isActive ? "stroke-[2.5px]" : "stroke-[1.5px]")} />
+                                    {showUnreadDot && (
+                                        <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#d97706]" />
+                                    )}
+                                </span>
+                            )}
+                        </NavLink>
+                    );
+                })}
             </nav>
         </div>
     );

@@ -16,6 +16,12 @@ export default function ChatInput({ onSend, onTypingChange }: ChatInputProps) {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
+    const focusInput = () => {
+        window.requestAnimationFrame(() => {
+            inputRef.current?.focus();
+        });
+    };
+
     useEffect(() => {
         const urls = images.map((file) => URL.createObjectURL(file));
         setPreviewUrls(urls);
@@ -34,10 +40,9 @@ export default function ChatInput({ onSend, onTypingChange }: ChatInputProps) {
             setText("");
             setImages([]);
             if (fileRef.current) fileRef.current.value = "";
-            // Return focus to input after sending
-            inputRef.current?.focus();
         } finally {
             setIsSending(false);
+            focusInput();
         }
     };
 
@@ -73,7 +78,7 @@ export default function ChatInput({ onSend, onTypingChange }: ChatInputProps) {
                                     e.stopPropagation();
                                     setImages((prev) => prev.filter((_, i) => i !== index));
                                     // Keep focus on text input after removing image
-                                    inputRef.current?.focus();
+                                    focusInput();
                                 }}
                             >
                                 <X className="h-3 w-3" />
@@ -88,6 +93,7 @@ export default function ChatInput({ onSend, onTypingChange }: ChatInputProps) {
                     variant="ghost"
                     size="icon"
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={handleImageButtonClick}
                     aria-label="Attach image"
                     disabled={isSending}
@@ -110,7 +116,7 @@ export default function ChatInput({ onSend, onTypingChange }: ChatInputProps) {
                         // Reset so same file can be picked again
                         e.target.value = "";
                         // Return focus to text input after file selection
-                        inputRef.current?.focus();
+                        focusInput();
                     }}
                 />
 
@@ -129,6 +135,7 @@ export default function ChatInput({ onSend, onTypingChange }: ChatInputProps) {
 
                 <Button
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => void submit()}
                     disabled={isSending || (text.trim().length === 0 && images.length === 0)}
                 >
